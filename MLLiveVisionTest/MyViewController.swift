@@ -20,6 +20,7 @@ class MyViewController: UIViewController {
     override func viewDidLoad() {
         super.viewDidLoad()
         prepareCaptureSession()
+        resultLabel.adjustsFontSizeToFitWidth = true
     }
     
     fileprivate func setLayerAsBackground(layer: CALayer) {
@@ -57,20 +58,24 @@ class MyViewController: UIViewController {
     }
     
     fileprivate func didGetPredictionResults(request: VNRequest, error: Error?) {
-        guard let results = request.results as? [VNClassificationObservation] else {
+        guard let results = request.results as? [VNObservation],
+            !results.isEmpty else {
             resultLabel.text = "??🙀??"
             return
         }
         
-        guard results.count != 0 else {
-            resultLabel.text = "??🙀??"
-            return
+        let firstResult = results.first!
+        let firstResultConfidence = Int(firstResult.confidence * 100)
+        
+        guard let firstResultClassificationObservation = firstResult as? VNClassificationObservation else {
+                resultLabel.text = "??🙀??"
+                return
         }
         
-        let highestConfidenceResult = results.first!
-        let identifier = highestConfidenceResult.identifier.contains(", ") ? String(describing: highestConfidenceResult.identifier.split(separator: ",").first!) : highestConfidenceResult.identifier
+        let firstResultID = firstResultClassificationObservation.identifier.contains(", ") ? String(describing: firstResultClassificationObservation.identifier.split(separator: ",").first!) : firstResultClassificationObservation.identifier
         
-        resultLabel.text = identifier
+        resultLabel.text = firstResultID + " \(firstResultConfidence)"
+        resultLabel.alpha = CGFloat(firstResult.confidence)
     }
 }
 
